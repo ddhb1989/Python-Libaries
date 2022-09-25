@@ -3,22 +3,21 @@
 # ----------------------------------------------------------------------------
 # Created By  : Bernhard Hofer  -   Mail@Bernhard-hofer.at
 #
-# Database Connector Class for MySQL
+# MySQL Database connector
 # ---------------------------------------------------------------------------
 import mysql.connector
-import json
 from .Database import Database
+
 
 class MySQL(Database):
 
     def __init__(self, host: str, user: str, password: str, database: str):
         """
         Try to connect to a MySQL Database
-        Args:
-            host: Database Hostname
-            user: Username for DB
-            password: Password for User
-            database: Databasename
+        :param host: DB Host
+        :param user: DB User
+        :param password: DB Password
+        :param database: DB Name
         """
         self.m_Host = host
         self.m_User = user
@@ -29,7 +28,6 @@ class MySQL(Database):
         self.m_Cursor = None
 
         self._TestConnection()
-        return None
 
     def _TestConnection(self):
         """ Test if we can establish a connection """
@@ -48,13 +46,6 @@ class MySQL(Database):
                                                     database=self.m_Database)
         self.m_Cursor = self.m_Connection.cursor(buffered=True, dictionary=True)
 
-    def JsonToString(self, data: dict):
-        """ prepare a dict to write it as json into the database """
-        if type(data) != dict:
-            raise ValueError("Value 'data' for 'JsonToString' method must be a 'dict'")
-
-        return json.dumps(data)
-
     def _CloseConnection(self):
         """ close connection """
         self.m_Cursor.close()
@@ -68,7 +59,6 @@ class MySQL(Database):
             **kwargs:
 
         Returns: cursor data
-
         """
         self._EstablishConnection()
         self.m_Cursor.execute(*args, **kwargs)
@@ -80,17 +70,15 @@ class MySQL(Database):
     def Insert(self, table: str, data: dict):
         """
         INSERT INTO statement
-        Args:
-            table: tablename
-            data: 'dict' key is columnname and value is the value
-
-        Returns: Last inserted id as an integer
+        :param table: tablename
+        :param data: dict[key] = value
+        :return: last inserted id as integer
         """
         if type(data) != dict:
             raise ValueError("Value 'data' for the INSERT INTO '{}' statement must be a 'dict'".format(table))
 
         # create insert into  statement
-        _ColumnList, _ValueList= '', ''
+        _ColumnList, _ValueList = '', ''
         for i, key in enumerate(data):
             _ColumnList += "`{}`, ".format(str(key))
             _ValueList += "%({})s, ".format(key)
@@ -102,17 +90,10 @@ class MySQL(Database):
         self.m_Connection.commit()
         self._CloseConnection()
 
-        # save laast inserted id
+        # save last inserted id
         self.m_LastInsertedID = int(self.m_Cursor.lastrowid)
 
         return self.m_LastInsertedID
-
-    def GetLastInsertedID(self):
-        """ returns the id from the last inserted auto incremented row """
-        if hasattr(self, "m_LastInsertedID"):
-            return self.m_LastInsertedID
-        else:
-            return 0
 
     def Select(self, *args, **kwargs):
         """ simple select query that returns all selected rows """
