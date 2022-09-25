@@ -37,7 +37,7 @@ class Database(ABC):
     def Update(self, table: str, data: dict, condition):
         pass
 
-    @ classmethod
+    @classmethod
     def GetLastInsertedID(self):
         """
         Always returns the last inserted id of an INSERT
