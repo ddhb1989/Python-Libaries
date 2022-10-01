@@ -38,7 +38,7 @@ class Database(ABC):
         pass
 
     @classmethod
-    def GetLastInsertedID(self):
+    def GetLastInsertedID(self) -> int:
         """
         Always returns the last inserted id of an INSERT
         :return: int: Last inserted id
