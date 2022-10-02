@@ -8,11 +8,17 @@
 import pymssql
 import pymssql._mssql # needed for py2exe
 from .Database import Database
+from Libaries.Configuration import Configuration
 
+class MSSQL(Database, Configuration):
 
-class MSSQL(Database):
-
-    def __init__(self, host: str, user: str, password: str, database: str, as_dict: bool=True):
+    def __init__(self,
+                 host: str = Configuration.MSSQL_Server,
+                 user: str = Configuration.MSSQL_User,
+                 password: str = Configuration.MSSQL_Password,
+                 database: str = Configuration.MSSQL_Name,
+                 as_dict: bool = True
+                 ):
         """
         Try to connect to a MySQL Database
         :param host: DB Host
@@ -90,13 +96,11 @@ class MSSQL(Database):
         try:
             self.m_Cursor.execute(_SQL, data)
             self.m_Connection.commit()
+            self.m_LastInsertedID = int(self.m_Cursor.lastrowid)
         except Exception as e:
             print(e)
         finally:
             self._CloseConnection()
-
-        # save last inserted id
-        self.m_LastInsertedID = int(self.m_Cursor.lastrowid)
 
         return self.m_LastInsertedID
 
@@ -122,23 +126,26 @@ class MSSQL(Database):
 
         _UpdateList, _Condition = '', ''
         for key in data:
-            _UpdateList += "`{}` = %s, ".format(key)
+            print(key)
+            _UpdateList += "[{}] = %s,".format(key)
 
         # condition can be a dict or a simple string statement
         if type(condition) == dict:
             for key in condition:
-                _Condition += "`{}` = %s, ".format(key)
-            _Condition = _Condition[:-2]
+                _Condition += "[{}] = %s AND ".format(key)
+            _Condition = _Condition[:-5]
 
             _Values = list(data.values())
+
             _Values.extend(list(condition.values()))
         else:
             _Condition = condition
             _Values = list(data.values())
 
-        _SQL = "UPDATE `{}`.`{}` SET {} WHERE ({})".format(self.m_Database, table, _UpdateList[:-2], _Condition)
+        _SQL = "UPDATE [{}] SET {} WHERE ({})".format(table, _UpdateList[:-1], _Condition)
+        print(_SQL)
 
         self._EstablishConnection()
-        self.m_Cursor.execute(_SQL, _Values)
+        self.m_Cursor.execute(_SQL, tuple(_Values))
         self.m_Connection.commit()
         self._CloseConnection()
